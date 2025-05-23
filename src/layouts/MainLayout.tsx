@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemIcon, ListItemText, IconButton } from '@mui/material';
+import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemIcon, ListItemText, IconButton, Button } from '@mui/material';
 import { 
   Menu as MenuIcon,
   Dashboard, 
@@ -10,7 +10,8 @@ import {
   ShoppingCart,
   AddBox,
   Person,
-  Assignment
+  Assignment,
+  Logout
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,6 +36,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     { text: 'Reports', icon: <Assignment />, path: '/reports' },
     { text: 'Settings', icon: <Settings />, path: '/settings' },
   ];
+
+  const handleLogout = () => {
+    // 清除本地存储
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // 跳转到登录页
+    navigate('/login');
+  };
 
   const drawer = (
     <div>
@@ -76,9 +85,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Aluminum Warehouse Management
           </Typography>
+          <Button 
+            color="inherit" 
+            onClick={handleLogout}
+            startIcon={<Logout />}
+          >
+            登出
+          </Button>
         </Toolbar>
       </AppBar>
       <Box
