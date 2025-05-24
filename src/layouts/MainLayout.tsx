@@ -14,7 +14,14 @@ import {
   ListItemButton,
   useTheme,
   useMediaQuery,
-  Button
+  Button,
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -26,7 +33,9 @@ import {
   Person as PersonIcon,
   Settings as SettingsIcon,
   Assessment as AssessmentIcon,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  AccountCircle as AccountCircleIcon,
+  Lock as LockIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -46,6 +55,16 @@ const menuItems = [
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
@@ -53,6 +72,60 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handlePasswordDialogOpen = () => {
+    setOpenPasswordDialog(true);
+    handleMenuClose();
+  };
+
+  const handlePasswordDialogClose = () => {
+    setOpenPasswordDialog(false);
+    setPasswordForm({
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setError('');
+  };
+
+  const handlePasswordChange = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8080/api/users/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          oldPassword: passwordForm.oldPassword,
+          newPassword: passwordForm.newPassword
+        })
+      });
+
+      if (response.ok) {
+        setSuccessMessage('Password changed successfully');
+        handlePasswordDialogClose();
+      } else {
+        const data = await response.json();
+        setError(data.message || 'Failed to change password');
+      }
+    } catch (err) {
+      setError('Network error, please try again');
+    }
   };
 
   const handleLogout = () => {
@@ -127,13 +200,31 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1 }} />
-          <Button
+          <IconButton
             color="inherit"
-            startIcon={<LogoutIcon />}
-            onClick={handleLogout}
+            onClick={handleMenuOpen}
+            sx={{ mr: 2 }}
           >
-            Logout
-          </Button>
+            <AccountCircleIcon />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem onClick={handlePasswordDialogOpen}>
+              <ListItemIcon>
+                <LockIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Change Password</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon>
+                <LogoutIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Logout</ListItemText>
+            </MenuItem>
+          </Menu>
         </Toolbar>
       </AppBar>
       <Box
@@ -168,6 +259,46 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       >
         {children}
       </Box>
+      <Dialog open={openPasswordDialog} onClose={handlePasswordDialogClose}>
+        <DialogTitle>Change Password</DialogTitle>
+        <DialogContent>
+          <TextField
+            margin="dense"
+            label="Current Password"
+            type="password"
+            fullWidth
+            value={passwordForm.oldPassword}
+            onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="New Password"
+            type="password"
+            fullWidth
+            value={passwordForm.newPassword}
+            onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Confirm New Password"
+            type="password"
+            fullWidth
+            value={passwordForm.confirmPassword}
+            onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+          />
+          {error && (
+            <Typography color="error" sx={{ mt: 1 }}>
+              {error}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handlePasswordDialogClose}>Cancel</Button>
+          <Button onClick={handlePasswordChange} variant="contained" color="primary">
+            Change Password
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
