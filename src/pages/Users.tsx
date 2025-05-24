@@ -20,7 +20,7 @@ import {
   Alert,
   Snackbar
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon, Lock as LockIcon } from '@mui/icons-material';
 
 interface User {
   id: number;
@@ -46,6 +46,9 @@ const Users: React.FC = () => {
   });
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [resetPasswordDialog, setResetPasswordDialog] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetError, setResetError] = useState('');
 
   // 获取用户列表
   const fetchUsers = async () => {
@@ -130,6 +133,48 @@ const Users: React.FC = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/users/${selectedUser.id}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          newPassword
+        })
+      });
+
+      if (response.ok) {
+        setResetPasswordDialog(false);
+        setNewPassword('');
+        setResetError('');
+        setSuccessMessage('Password reset successfully');
+      } else {
+        const data = await response.json();
+        setResetError(data.message || 'Failed to reset password');
+      }
+    } catch (err) {
+      setResetError('Network error, please try again');
+    }
+  };
+
+  const handleResetPasswordClick = (user: User) => {
+    setSelectedUser(user);
+    setResetPasswordDialog(true);
+    setResetError('');
+  };
+
+  const handleResetPasswordClose = () => {
+    setResetPasswordDialog(false);
+    setSelectedUser(null);
+    setNewPassword('');
+    setResetError('');
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -159,6 +204,9 @@ const Users: React.FC = () => {
                 <TableCell>
                   <IconButton onClick={() => handleEdit(user)} color="primary">
                     <EditIcon />
+                  </IconButton>
+                  <IconButton onClick={() => handleResetPasswordClick(user)} color="secondary">
+                    <LockIcon />
                   </IconButton>
                   <IconButton onClick={() => handleDelete(user.id)} color="error">
                     <DeleteIcon />
@@ -212,6 +260,34 @@ const Users: React.FC = () => {
           <Button onClick={() => setOpenDialog(false)}>取消</Button>
           <Button onClick={handleSubmit} variant="contained" color="primary">
             保存
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={resetPasswordDialog} onClose={handleResetPasswordClose}>
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Reset password for user: {selectedUser?.username}
+          </Typography>
+          <TextField
+            margin="dense"
+            label="New Password"
+            type="password"
+            fullWidth
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          {resetError && (
+            <Typography color="error" sx={{ mt: 1 }}>
+              {resetError}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleResetPasswordClose}>Cancel</Button>
+          <Button onClick={handleResetPassword} variant="contained" color="primary">
+            Reset Password
           </Button>
         </DialogActions>
       </Dialog>
