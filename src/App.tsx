@@ -5,6 +5,7 @@ import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Users from './pages/Users';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // 临时占位组件，后续会替换为实际页面组件
@@ -93,7 +94,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <PlaceholderPage />
+                  <Users />
                 </MainLayout>
               </ProtectedRoute>
             }

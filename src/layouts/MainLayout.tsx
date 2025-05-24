@@ -1,47 +1,63 @@
-import React from 'react';
-import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemIcon, ListItemText, IconButton, Button } from '@mui/material';
-import { 
+import React, { useState } from 'react';
+import {
+  Box,
+  Drawer,
+  AppBar,
+  Toolbar,
+  List,
+  Typography,
+  Divider,
+  IconButton,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  ListItemButton,
+  useTheme,
+  useMediaQuery,
+  Button
+} from '@mui/material';
+import {
   Menu as MenuIcon,
-  Dashboard, 
-  Inventory, 
-  People, 
-  LocalShipping, 
-  Settings,
-  ShoppingCart,
-  AddBox,
-  Person,
-  Assignment,
-  Logout
+  Dashboard as DashboardIcon,
+  Inventory as InventoryIcon,
+  ShoppingCart as ShoppingCartIcon,
+  LocalShipping as LocalShippingIcon,
+  People as PeopleIcon,
+  Person as PersonIcon,
+  Settings as SettingsIcon,
+  Assessment as AssessmentIcon,
+  Logout as LogoutIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const drawerWidth = 240;
 
-interface MainLayoutProps {
-  children: React.ReactNode;
-}
+const menuItems = [
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+  { text: 'Products', icon: <InventoryIcon />, path: '/products' },
+  { text: 'Orders', icon: <ShoppingCartIcon />, path: '/orders' },
+  { text: 'Inbound', icon: <LocalShippingIcon />, path: '/inbound' },
+  { text: 'Customers', icon: <PeopleIcon />, path: '/customers' },
+  { text: 'Delivery', icon: <LocalShippingIcon />, path: '/delivery' },
+  { text: 'Users', icon: <PersonIcon />, path: '/users' },
+  { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
+];
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const location = useLocation();
 
-  const menuItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/' },
-    { text: 'Products', icon: <Inventory />, path: '/products' },
-    { text: 'Orders', icon: <ShoppingCart />, path: '/orders' },
-    { text: 'Inbound', icon: <AddBox />, path: '/inbound' },
-    { text: 'Customers', icon: <Person />, path: '/customers' },
-    { text: 'Delivery', icon: <LocalShipping />, path: '/delivery' },
-    { text: 'Users', icon: <People />, path: '/users' },
-    { text: 'Reports', icon: <Assignment />, path: '/reports' },
-    { text: 'Settings', icon: <Settings />, path: '/settings' },
-  ];
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
   const handleLogout = () => {
-    // 清除本地存储
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    // 跳转到登录页
     navigate('/login');
   };
 
@@ -52,15 +68,39 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           QuickStore
         </Typography>
       </Toolbar>
+      <Divider />
       <List>
         {menuItems.map((item) => (
-          <ListItem 
-            key={item.text} 
-            onClick={() => navigate(item.path)}
-            sx={{ cursor: 'pointer' }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              selected={location.pathname === item.path}
+              onClick={() => {
+                navigate(item.path);
+                if (isMobile) {
+                  setMobileOpen(false);
+                }
+              }}
+              sx={{
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: 'primary.main',
+                  },
+                  '& .MuiListItemText-primary': {
+                    color: 'primary.main',
+                    fontWeight: 'bold',
+                  },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
           </ListItem>
         ))}
       </List>
@@ -79,21 +119,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <Toolbar>
           <IconButton
             color="inherit"
+            aria-label="open drawer"
             edge="start"
-            onClick={() => setMobileOpen(!mobileOpen)}
+            onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { sm: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Aluminum Warehouse Management
-          </Typography>
-          <Button 
-            color="inherit" 
+          <Box sx={{ flexGrow: 1 }} />
+          <Button
+            color="inherit"
+            startIcon={<LogoutIcon />}
             onClick={handleLogout}
-            startIcon={<Logout />}
           >
-            登出
+            Logout
           </Button>
         </Toolbar>
       </AppBar>
@@ -102,26 +141,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
       >
         <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
+          variant={isMobile ? 'temporary' : 'permanent'}
+          open={isMobile ? mobileOpen : true}
+          onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true,
+            keepMounted: true, // Better open performance on mobile.
           }}
           sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+            },
           }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-          open
         >
           {drawer}
         </Drawer>
