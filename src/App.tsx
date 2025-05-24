@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // 临时占位组件，后续会替换为实际页面组件
@@ -26,6 +27,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route
             path="/"
             element={

@@ -6,17 +6,28 @@ import {
   Button, 
   Typography, 
   Container,
-  Alert
+  Alert,
+  Link
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   });
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // 从路由状态中获取注册成功消息
+  React.useEffect(() => {
+    const state = location.state as { message?: string };
+    if (state?.message) {
+      setSuccessMessage(state.message);
+    }
+  }, [location]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -84,6 +95,11 @@ const Login: React.FC = () => {
                 {error}
               </Alert>
             )}
+            {successMessage && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                {successMessage}
+              </Alert>
+            )}
             <TextField
               margin="normal"
               required
@@ -116,6 +132,11 @@ const Login: React.FC = () => {
             >
               登录
             </Button>
+            <Box sx={{ textAlign: 'center' }}>
+              <Link href="/register" variant="body2">
+                没有账号？立即注册
+              </Link>
+            </Box>
           </Box>
         </Paper>
       </Box>
